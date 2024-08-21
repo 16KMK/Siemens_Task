@@ -57,7 +57,7 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t received_byte[];
-uint8_t letter;
+uint8_t letter[];
 /* USER CODE END 0 */
 
 /**
@@ -93,10 +93,6 @@ int main(void) {
 			On_Data_Recieve_interrupt);
 	// Enable the receive interrupt
 	HAL_UART_Receive_IT(&huart1, (uint8_t*) received_byte, 1);
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	GPIO_InitTypeDef init = { .Pin = GPIO_PIN_13, .Mode = GPIO_MODE_OUTPUT_PP,
-			.Speed = GPIO_SPEED_FREQ_LOW, };
-
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -195,23 +191,24 @@ static void MX_GPIO_Init(void) {
 
 /* USER CODE BEGIN 4 */
 volatile void On_Data_Recieve_interrupt(UART_HandleTypeDef *config) {
+
 	// Receive the data byte
 	HAL_UART_Receive_IT(config, (uint8_t*) received_byte, 1);
 
 	// Process the received byte
 	if ((uint8_t*) received_byte >= 'A' && (uint8_t*) received_byte <= 'Z') {
-		letter = (uint8_t*) received_byte;
+		(char)letter = *((uint8_t*) received_byte +0x1);
+
 	} else if ((uint8_t*) received_byte >= 'a'
 			&& (uint8_t*) received_byte <= 'z') {
 		letter = (uint8_t*) received_byte - 'a' + 'A';
-	} else {
-		letter = (uint8_t*) received_byte;
-	}
-	// Send the response byte "letter"
-	HAL_UART_Transmit(config, (uint8_t*) received_byte, 1, 100);
 
-	// Re-enable the receive interrupt
-	HAL_UART_Receive_IT(config, (uint8_t*) received_byte, 1);
+	} else {
+		letter = received_byte;
+	}
+
+	// Send the response byte "letter"
+	HAL_UART_Transmit(config, letter, 1, 100);
 
 }
 /* USER CODE END 4 */
